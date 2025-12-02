@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e:*)",
+      "Bash(npx tsx:*)",
+      "Bash(cat:*)",
+      "WebFetch(domain:msalud.mundoamtae.com)",
+      "WebSearch",
+      "Bash(curl:*)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --no-git)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(find:*)",
+      "Bash(dir \"D:\\Users\\kevin\\github\\support-automation-platform\")",
+      "Bash(ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git remote add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Complete TIM Medicina landing + admin panel\n\n- Landing page with lead capture form\n- Admin panel with leads management\n- Supabase integration with RLS policies\n- API routes for CRUD operations\n- Middleware to proxy migration (Next.js 16)\n- Fix: Admin leads now visible via API fallback\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm ls:*)",
+      "WebFetch(domain:www.timmedicina.com)",
+      "Bash(printf:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

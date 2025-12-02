@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { SERVICES } from "@/lib/constants";
 import { PaymentsIcon, TransferIcon, ServicesIcon } from "./Icons";
 
@@ -25,15 +26,42 @@ export function Services() {
   return (
     <section id="servicios" className="py-24">
       <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Nuestros servicios
-          </h2>
-          <p className="text-slate-400 max-w-lg mx-auto">
-            Soluciones de cobranzas para comercios del interior
-          </p>
+        {/* Header con imagen */}
+        <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
+          <div className="text-center lg:text-left">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Nuestros servicios
+            </h2>
+            <p className="text-slate-400 max-w-lg">
+              Soluciones de cobranzas digitales para comercios del interior. 
+              Simple, rapido y con las comisiones mas bajas del mercado.
+            </p>
+          </div>
+          
+          {/* Imagen del QR con glow */}
+          <div className="hidden lg:flex justify-center items-center relative">
+            {/* Glow dorado difuminado */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-72 h-72 bg-amber-500/15 rounded-full blur-3xl" />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-56 h-56 bg-yellow-400/10 rounded-full blur-2xl" />
+            </div>
+            
+            {/* Imagen con animacion float */}
+            <div className="relative animate-float" style={{ animationDelay: "1s" }}>
+              <Image
+                src="/phone-qr.png"
+                alt="Celular escaneando codigo QR - Cobranzas digitales"
+                width={320}
+                height={320}
+                className="drop-shadow-2xl"
+              />
+            </div>
+          </div>
         </div>
 
+        {/* Cards de servicios */}
         <div className="grid md:grid-cols-3 gap-6">
           {SERVICES.map((service) => (
             <ServiceCard

@@ -47,21 +47,12 @@ export const baseMetadata: Metadata = {
     title: "Junin Pagos | Cobranzas Digitales con Comisiones Justas",
     description:
       "Comisiones desde 2.7%, hasta 40% menos que MercadoPago. Sin costos de activación. Alta en 48hs.",
-    images: [
-      {
-        url: "/logo-jp.png",
-        width: 1200,
-        height: 630,
-        alt: "Junin Pagos - Red de cobranzas para el interior",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Junin Pagos | Cobranzas Digitales con Comisiones Justas",
     description:
       "Comisiones desde 2.7%, hasta 40% menos que MercadoPago. Sin costos de activación.",
-    images: ["/logo-jp.png"],
   },
   robots: {
     index: true,

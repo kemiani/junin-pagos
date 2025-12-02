@@ -7,22 +7,17 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Red de cobranzas para comercios del interior. Comisiones desde 2.7%.",
     start_url: "/",
     display: "standalone",
-    background_color: "#f8fafc",
-    theme_color: "#0891B2",
+    background_color: "#020617",
+    theme_color: "#020617",
     orientation: "portrait-primary",
     icons: [
       {
-        src: "/icon-192.png",
-        sizes: "192x192",
-        type: "image/png",
-      },
-      {
-        src: "/icon-512.png",
+        src: "/logo-jp.png",
         sizes: "512x512",
         type: "image/png",
       },
       {
-        src: "/icon-512.png",
+        src: "/logo-jp.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",

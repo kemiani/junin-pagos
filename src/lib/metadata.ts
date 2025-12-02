@@ -4,11 +4,11 @@ import { BUSINESS } from "./constants";
 const siteUrl = "https://juninpagos.com.ar";
 
 export const viewport: Viewport = {
-  themeColor: "#0891B2",
+  themeColor: "#020617",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  colorScheme: "light",
+  colorScheme: "dark",
 };
 
 export const baseMetadata: Metadata = {
@@ -49,7 +49,7 @@ export const baseMetadata: Metadata = {
       "Comisiones desde 2.7%, hasta 40% menos que MercadoPago. Sin costos de activación. Alta en 48hs.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/logo-jp.png",
         width: 1200,
         height: 630,
         alt: "Junin Pagos - Red de cobranzas para el interior",
@@ -61,7 +61,7 @@ export const baseMetadata: Metadata = {
     title: "Junin Pagos | Cobranzas Digitales con Comisiones Justas",
     description:
       "Comisiones desde 2.7%, hasta 40% menos que MercadoPago. Sin costos de activación.",
-    images: ["/og-image.png"],
+    images: ["/logo-jp.png"],
   },
   robots: {
     index: true,
@@ -93,7 +93,7 @@ export function generateJsonLd() {
         url: siteUrl,
         logo: {
           "@type": "ImageObject",
-          url: `${siteUrl}/logo.png`,
+          url: `${siteUrl}/logo-jp.png`,
           width: 512,
           height: 512,
         },

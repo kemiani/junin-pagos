@@ -56,6 +56,7 @@ export function AnimatedCounter({ end, suffix = "", prefix = "", delay = 0 }: An
     <span
       ref={ref}
       style={{ minWidth: '3ch', display: 'inline-block' }}
+      suppressHydrationWarning
     >
       {prefix}
       {count.toLocaleString("es-AR")}

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { BUSINESS } from "./constants";
 
-const siteUrl = "https://juninpagos.com.ar";
+const siteUrl = "https://junin-pagos.vercel.app";
 
 export const viewport: Viewport = {
   themeColor: "#020617",

@@ -7,37 +7,29 @@ const iconMap = {
   services: ServicesIcon,
 };
 
-function ServiceCard({
-  icon,
-  title,
-  desc,
-}: {
-  icon: keyof typeof iconMap;
-  title: string;
-  desc: string;
-}) {
+function ServiceCard({ icon, title, desc }: { icon: keyof typeof iconMap; title: string; desc: string }) {
   const Icon = iconMap[icon];
 
   return (
-    <article className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-cyan-200 transition-all duration-300 p-6 group">
-      <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300 bg-cyan-600/10">
-        <Icon className="w-6 h-6 text-cyan-600" />
+    <article className="glass-card rounded-2xl p-8 transition-all duration-300 group hover:scale-[1.02]">
+      <div className="w-14 h-14 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-6 group-hover:bg-cyan-500/20 transition-colors">
+        <Icon className="w-7 h-7 text-cyan-400" />
       </div>
-      <h3 className="text-lg font-semibold text-slate-800 mb-2">{title}</h3>
-      <p className="text-slate-600 text-sm leading-relaxed">{desc}</p>
+      <h3 className="text-xl font-semibold text-white mb-3">{title}</h3>
+      <p className="text-slate-400 leading-relaxed">{desc}</p>
     </article>
   );
 }
 
 export function Services() {
   return (
-    <section id="servicios" className="py-16 bg-white" aria-labelledby="services-heading">
-      <div className="max-w-5xl mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 id="services-heading" className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">
+    <section id="servicios" className="py-24">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Nuestros servicios
           </h2>
-          <p className="text-slate-600 max-w-lg mx-auto">
+          <p className="text-slate-400 max-w-lg mx-auto">
             Soluciones de cobranzas para comercios del interior
           </p>
         </div>

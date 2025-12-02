@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { COLORS } from "@/lib/constants";
 
 interface NavLink {
   href: string;
@@ -29,11 +28,11 @@ export function MobileMenu({ navLinks }: MobileMenuProps) {
       <button
         onClick={toggleMenu}
         className="md:hidden p-2"
-        aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
+        aria-label={isOpen ? "Cerrar menu" : "Abrir menu"}
         aria-expanded={isOpen}
         aria-controls="mobile-menu"
       >
-        <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -47,14 +46,14 @@ export function MobileMenu({ navLinks }: MobileMenuProps) {
       {isOpen && (
         <div
           id="mobile-menu"
-          className="absolute top-full left-0 right-0 md:hidden bg-white border-t border-slate-100 px-4 py-3 space-y-3 shadow-lg"
+          className="absolute top-full left-0 right-0 md:hidden bg-slate-900/95 backdrop-blur-md border-t border-white/5 px-6 py-4 space-y-4 shadow-2xl"
         >
           {navLinks.map((link) => (
             <a
               key={link.href}
               href={link.href}
               onClick={closeMenu}
-              className="block text-slate-600 text-sm hover:text-cyan-600 transition-colors py-2"
+              className="block text-slate-300 hover:text-white transition-colors py-2"
             >
               {link.label}
             </a>
@@ -62,8 +61,7 @@ export function MobileMenu({ navLinks }: MobileMenuProps) {
           <a
             href="#contacto"
             onClick={closeMenu}
-            className="block text-white px-4 py-2 rounded-lg text-sm text-center font-medium"
-            style={{ backgroundColor: COLORS.primary }}
+            className="block bg-gradient-to-r from-cyan-500 to-cyan-600 text-white px-4 py-3 rounded-xl text-center font-medium"
           >
             Contactanos
           </a>

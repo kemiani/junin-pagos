@@ -37,7 +37,7 @@ export function ContactForm() {
             method: "POST",
             headers: { 
               "Content-Type": "application/json",
-              "X-Requested-With": "XMLHttpRequest", // CSRF protection
+              "X-Requested-With": "XMLHttpRequest",
             },
             body: JSON.stringify(formData),
           });
@@ -47,11 +47,10 @@ export function ContactForm() {
           if (response.ok) {
             setStatus("success");
             setFormData({ nombre: "", telefono: "", localidad: "" });
-            // Reset status after 5 seconds
             setTimeout(() => setStatus("idle"), 5000);
           } else if (response.status === 429) {
             setStatus("error");
-            setErrorMessage("Demasiadas solicitudes. Espera un momento e intenta de nuevo.");
+            setErrorMessage("Demasiadas solicitudes. Espera un momento.");
           } else {
             setStatus("error");
             setErrorMessage(result.error || "Error al enviar. Intenta de nuevo.");
@@ -68,9 +67,9 @@ export function ContactForm() {
   const isLoading = status === "sending" || isPending;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
       <div>
-        <label htmlFor="nombre" className="block text-sm font-medium text-slate-700 mb-1.5">
+        <label htmlFor="nombre" className="block text-sm font-medium text-slate-300 mb-2">
           Nombre o razon social *
         </label>
         <input
@@ -79,7 +78,7 @@ export function ContactForm() {
           name="nombre"
           required
           autoComplete="organization"
-          className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all text-sm"
+          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all text-white placeholder:text-slate-500"
           placeholder="Tu nombre o comercio"
           value={formData.nombre}
           onChange={handleChange}
@@ -88,7 +87,7 @@ export function ContactForm() {
       </div>
 
       <div>
-        <label htmlFor="telefono" className="block text-sm font-medium text-slate-700 mb-1.5">
+        <label htmlFor="telefono" className="block text-sm font-medium text-slate-300 mb-2">
           Telefono / WhatsApp *
         </label>
         <input
@@ -97,7 +96,7 @@ export function ContactForm() {
           name="telefono"
           required
           autoComplete="tel"
-          className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all text-sm"
+          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all text-white placeholder:text-slate-500"
           placeholder="+54 9 11 1234-5678"
           value={formData.telefono}
           onChange={handleChange}
@@ -106,7 +105,7 @@ export function ContactForm() {
       </div>
 
       <div>
-        <label htmlFor="localidad" className="block text-sm font-medium text-slate-700 mb-1.5">
+        <label htmlFor="localidad" className="block text-sm font-medium text-slate-300 mb-2">
           Localidad
         </label>
         <input
@@ -114,7 +113,7 @@ export function ContactForm() {
           id="localidad"
           name="localidad"
           autoComplete="address-level2"
-          className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all text-sm"
+          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all text-white placeholder:text-slate-500"
           placeholder="De donde sos?"
           value={formData.localidad}
           onChange={handleChange}
@@ -123,13 +122,13 @@ export function ContactForm() {
       </div>
 
       {status === "error" && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm" role="alert">
+        <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm" role="alert">
           {errorMessage}
         </div>
       )}
 
       {status === "success" && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm" role="alert">
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm" role="alert">
           Gracias! Te contactaremos pronto.
         </div>
       )}
@@ -137,7 +136,7 @@ export function ContactForm() {
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full text-white py-3 rounded-lg font-medium transition-all hover:opacity-90 disabled:opacity-70 disabled:cursor-not-allowed bg-cyan-600"
+        className="w-full bg-gradient-to-r from-cyan-500 to-cyan-600 text-white py-4 rounded-xl font-semibold transition-all hover:shadow-[0_0_30px_rgba(34,211,238,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading ? "Enviando..." : status === "success" ? "Enviado!" : "Enviar consulta"}
       </button>

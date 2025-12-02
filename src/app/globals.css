@@ -1,80 +1,105 @@
 @import "tailwindcss";
 
 :root {
-  /* Colores de marca Junin Pagos */
-  --color-primary: #0891B2;
-  --color-primary-dark: #0E7490;
-  --color-secondary: #0F172A;
-  --color-accent: #06B6D4;
-  --color-success: #10B981;
-
-  /* Fondos */
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --bg-primary: #020617;
+  --bg-secondary: #0f172a;
+  --color-primary: #22d3ee;
+  --color-accent: #10b981;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
-
-  /* Colores personalizados para Tailwind */
-  --color-brand: var(--color-primary);
-  --color-brand-dark: var(--color-primary-dark);
+  --color-background: var(--bg-primary);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-inter), system-ui, sans-serif;
 }
 
-/* Respeta preferencias de movimiento reducido */
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
   }
 }
 
-/* Texto con gradiente */
+/* Gradient text utility */
 .gradient-text {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+  background: linear-gradient(135deg, #22d3ee 0%, #10b981 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Scroll suave */
+/* Glass card utility */
+.glass-card {
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.glass-card:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(34,211,238,0.3);
+}
+
+/* Glow effects */
+.glow-cyan {
+  box-shadow: 0 0 40px rgba(34,211,238,0.3);
+}
+
+/* Animated gradient background */
+.gradient-mesh {
+  background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #042f2e 100%);
+}
+
+/* Grid pattern overlay */
+.grid-pattern {
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
 html {
   scroll-behavior: smooth;
 }
 
-/* Mejora de legibilidad */
 body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background-color: #020617;
+  color: #f8fafc;
 }
 
-/* Focus visible para accesibilidad */
 :focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid #22d3ee;
   outline-offset: 2px;
 }
 
-/* Skip link para accesibilidad */
 .skip-link {
   position: absolute;
   top: -100%;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--color-primary);
-  color: white;
+  background: #22d3ee;
+  color: #020617;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   z-index: 100;
-  transition: top 0.2s;
+}
+.skip-link:focus { top: 1rem; }
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
-.skip-link:focus {
-  top: 1rem;
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
+
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-shimmer { animation: shimmer 2s infinite; }

@@ -1,10 +1,31 @@
-// Paleta de colores del logo Junin Pagos
+// Paleta de colores dark premium - Junin Pagos
 export const COLORS = {
-  primary: "#0891B2",      // Cyan del logo
-  primaryDark: "#0E7490",  // Cyan oscuro
-  secondary: "#0F172A",    // Azul oscuro "Pagos"
-  accent: "#06B6D4",       // Cyan claro
-  success: "#10B981",      // Verde
+  // Backgrounds
+  bgPrimary: "#020617",    // slate-950
+  bgSecondary: "#0f172a",  // slate-900
+  bgCard: "rgba(255,255,255,0.03)",
+  
+  // Brand
+  primary: "#22d3ee",      // cyan-400
+  primaryDark: "#0891b2",  // cyan-600
+  accent: "#10b981",       // emerald-500
+  
+  // Text
+  textPrimary: "#f8fafc",  // slate-50
+  textSecondary: "#94a3b8", // slate-400
+  textMuted: "#64748b",    // slate-500
+  
+  // Borders
+  borderLight: "rgba(255,255,255,0.1)",
+  borderAccent: "rgba(34,211,238,0.3)",
+  
+  // Effects
+  glowCyan: "rgba(34,211,238,0.4)",
+  glowEmerald: "rgba(16,185,129,0.3)",
+  
+  // Legacy (para compatibilidad)
+  secondary: "#0F172A",
+  success: "#10B981",
 } as const;
 
 // Informacion del negocio

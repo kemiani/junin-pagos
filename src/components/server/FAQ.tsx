@@ -3,12 +3,12 @@ import { FAQAccordion } from "@/components/client/FAQAccordion";
 
 export function FAQ() {
   return (
-    <section id="faq" className="py-16 bg-white" aria-labelledby="faq-heading">
-      <div className="max-w-2xl mx-auto px-4">
-        <h2 id="faq-heading" className="text-2xl md:text-3xl font-bold text-slate-900 mb-8 text-center">
+    <section id="faq" className="py-24">
+      <div className="max-w-3xl mx-auto px-6">
+        <h2 className="text-3xl md:text-4xl font-bold text-white mb-12 text-center">
           Preguntas frecuentes
         </h2>
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+        <div className="glass-card rounded-2xl p-6">
           <FAQAccordion faqs={FAQS} />
         </div>
       </div>

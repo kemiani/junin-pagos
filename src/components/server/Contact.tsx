@@ -4,55 +4,55 @@ import { ContactForm } from "@/components/client/ContactForm";
 
 export function Contact() {
   return (
-    <section id="contacto" className="py-16" aria-labelledby="contact-heading">
-      <div className="max-w-5xl mx-auto px-4">
+    <section id="contacto" className="py-24" aria-labelledby="contact-heading">
+      <div className="max-w-6xl mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-12">
           <div>
-            <h2 id="contact-heading" className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">
+            <h2 id="contact-heading" className="text-3xl md:text-4xl font-bold text-white mb-4">
               Contactanos
             </h2>
-            <p className="text-slate-600 mb-6">Dejanos tus datos y te contactamos.</p>
+            <p className="text-slate-400 mb-8 text-lg">Dejanos tus datos y te contactamos.</p>
 
-            <address className="space-y-4 not-italic">
+            <address className="space-y-6 not-italic">
               <a
                 href={`tel:${BUSINESS.phone}`}
-                className="flex items-center gap-3 group"
+                className="flex items-center gap-4 group"
               >
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-cyan-600/10">
-                  <PhoneIcon className="w-5 h-5 text-cyan-600" />
+                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">
+                  <PhoneIcon className="w-5 h-5 text-cyan-400" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500">Telefono / WhatsApp</p>
-                  <p className="font-medium text-slate-800 group-hover:text-cyan-600 transition-colors">
+                  <p className="text-sm text-slate-500">Telefono / WhatsApp</p>
+                  <p className="font-medium text-white group-hover:text-cyan-400 transition-colors">
                     {BUSINESS.phone}
                   </p>
                 </div>
               </a>
 
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-cyan-600/10">
-                  <LocationIcon className="w-5 h-5 text-cyan-600" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+                  <LocationIcon className="w-5 h-5 text-cyan-400" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500">Direccion</p>
-                  <p className="font-medium text-slate-800">{BUSINESS.address}</p>
+                  <p className="text-sm text-slate-500">Direccion</p>
+                  <p className="font-medium text-white">{BUSINESS.address}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-cyan-600/10">
-                  <BuildingIcon className="w-5 h-5 text-cyan-600" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+                  <BuildingIcon className="w-5 h-5 text-cyan-400" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500">CUIT</p>
-                  <p className="font-medium text-slate-800">{BUSINESS.cuit}</p>
+                  <p className="text-sm text-slate-500">CUIT</p>
+                  <p className="font-medium text-white">{BUSINESS.cuit}</p>
                 </div>
               </div>
             </address>
           </div>
 
-          {/* Formulario - Client Component */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          {/* Formulario */}
+          <div className="glass-card rounded-2xl p-8">
             <ContactForm />
           </div>
         </div>

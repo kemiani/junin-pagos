@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { baseMetadata, viewport as viewportConfig, generateJsonLd } from "@/lib/metadata";
 
-// Inter optimizada - solo weights necesarios
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
@@ -25,13 +24,10 @@ export default function RootLayout({
   return (
     <html lang="es-AR" className={inter.variable}>
       <head>
-        {/* DNS prefetch para WhatsApp */}
         <link rel="dns-prefetch" href="https://wa.me" />
       </head>
-      <body className="font-sans antialiased bg-slate-50 text-slate-900">
+      <body className="font-sans antialiased">
         {children}
-
-        {/* JSON-LD al final del body para no bloquear render */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

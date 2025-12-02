@@ -23,19 +23,19 @@ function FAQItem({
   index: number;
 }) {
   return (
-    <div className="border-b border-slate-100 last:border-0">
+    <div className="border-b border-white/10 last:border-0">
       <button
         onClick={onToggle}
-        className="w-full py-4 flex items-center justify-between text-left group"
+        className="w-full py-5 flex items-center justify-between text-left group"
         aria-expanded={isOpen}
         aria-controls={`faq-answer-${index}`}
         id={`faq-question-${index}`}
       >
-        <span className="font-medium text-slate-800 group-hover:text-cyan-600 transition-colors pr-4 text-sm">
+        <span className="font-medium text-white group-hover:text-cyan-400 transition-colors pr-4">
           {faq.q}
         </span>
         <svg
-          className={`w-5 h-5 text-slate-400 transition-transform duration-200 flex-shrink-0 ${isOpen ? "rotate-180" : ""}`}
+          className={`w-5 h-5 text-slate-500 transition-transform duration-200 flex-shrink-0 ${isOpen ? "rotate-180 text-cyan-400" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -48,9 +48,9 @@ function FAQItem({
         id={`faq-answer-${index}`}
         role="region"
         aria-labelledby={`faq-question-${index}`}
-        className={`overflow-hidden transition-all duration-200 ${isOpen ? "max-h-40 pb-4" : "max-h-0"}`}
+        className={`overflow-hidden transition-all duration-200 ${isOpen ? "max-h-40 pb-5" : "max-h-0"}`}
       >
-        <p className="text-slate-600 text-sm leading-relaxed">{faq.a}</p>
+        <p className="text-slate-400 leading-relaxed">{faq.a}</p>
       </div>
     </div>
   );

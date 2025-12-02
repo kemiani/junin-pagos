@@ -1,3 +1,4 @@
+import { GradientBackground } from "@/components/server/GradientBackground";
 import { Header } from "@/components/server/Header";
 import { Hero } from "@/components/server/Hero";
 import { Services } from "@/components/server/Services";
@@ -8,12 +9,11 @@ import { Contact } from "@/components/server/Contact";
 import { Footer } from "@/components/server/Footer";
 import { WhatsAppButton } from "@/components/server/WhatsAppButton";
 
-// Esta pagina es 100% Server Component
-// Solo los componentes interactivos (Counter, FAQ, Form, Menu) son Client Components
 export default function Home() {
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Skip link para accesibilidad */}
+    <div className="min-h-screen">
+      <GradientBackground />
+      
       <a href="#main-content" className="skip-link">
         Saltar al contenido principal
       </a>
@@ -30,8 +30,6 @@ export default function Home() {
       </main>
 
       <Footer />
-
-      {/* Boton flotante de WhatsApp */}
       <WhatsAppButton />
     </div>
   );

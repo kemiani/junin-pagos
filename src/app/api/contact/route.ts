@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
-import { contactFormSchema, type ContactLead } from "@/lib/validations";
+import { contactFormSchema } from "@/lib/validations";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { supabase } from "@/lib/supabase";
 
 // Obtener IP del request
 function getClientIP(request: NextRequest): string {
@@ -21,7 +20,7 @@ export async function POST(request: NextRequest) {
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { error: "Demasiadas solicitudes. Intenta en unos minutos." },
-      { 
+      {
         status: 429,
         headers: {
           "X-RateLimit-Remaining": "0",
@@ -73,47 +72,28 @@ export async function POST(request: NextRequest) {
 
   const formData = validationResult.data;
 
-  // 6. Crear lead con metadata
-  const lead: ContactLead = {
-    ...formData,
-    fecha: new Date().toISOString(),
-    ip: ip,
-  };
-
-  // 7. Guardar en archivo JSON (en produccion usar base de datos)
+  // 6. Guardar en Supabase
   try {
-    const dataDir = path.join(process.cwd(), "data");
-    const filePath = path.join(dataDir, "leads.json");
+    const { error } = await supabase.from("leads").insert({
+      nombre: formData.nombre,
+      telefono: formData.telefono,
+      localidad: formData.localidad || "",
+      ip: ip,
+    });
 
-    // Crear directorio si no existe
-    await fs.mkdir(dataDir, { recursive: true });
-
-    // Leer leads existentes
-    let leads: ContactLead[] = [];
-    try {
-      const fileContent = await fs.readFile(filePath, "utf-8");
-      leads = JSON.parse(fileContent);
-    } catch {
-      // Archivo no existe, empezamos con array vacio
+    if (error) {
+      console.error("[SUPABASE ERROR]", error);
+      return NextResponse.json(
+        { error: "Error guardando los datos" },
+        { status: 500 }
+      );
     }
 
-    // Limitar tamanio del archivo (max 1000 leads)
-    if (leads.length >= 1000) {
-      leads = leads.slice(-999); // Mantener los ultimos 999
-    }
-
-    // Agregar nuevo lead
-    leads.push(lead);
-
-    // Guardar
-    await fs.writeFile(filePath, JSON.stringify(leads, null, 2), "utf-8");
-
-    // Log para monitoreo
-    console.log(`[LEAD] Nuevo contacto: ${lead.nombre} - ${lead.telefono}`);
+    console.log(`[LEAD] Nuevo contacto: ${formData.nombre} - ${formData.telefono}`);
 
     return NextResponse.json(
       { success: true, message: "Consulta recibida correctamente" },
-      { 
+      {
         status: 200,
         headers: {
           "X-RateLimit-Remaining": String(rateLimit.remaining),

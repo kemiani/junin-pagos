@@ -1,30 +1,40 @@
 -- ============================================
--- SCRIPT PARA AGREGAR ADMINISTRADORES
+-- JUNIN PAGOS - AGREGAR USUARIO ADMIN
 -- ============================================
--- Ejecutar en Supabase SQL Editor
 --
--- IMPORTANTE: Cambiar los valores antes de ejecutar
--- El password debe ser hasheado con bcrypt (cost 10)
--- Podes generar el hash en: https://bcrypt-generator.com/
+-- INSTRUCCIONES:
+-- 1. Primero crear el usuario en Authentication > Users
+-- 2. Copiar el UUID del usuario creado
+-- 3. Reemplazar los valores en este script
+-- 4. Ejecutar en SQL Editor
+--
 -- ============================================
 
--- Ejemplo: Agregar admin con email y password hasheado
-INSERT INTO admins (email, password_hash, nombre)
+-- Reemplazar estos valores:
+-- - 'UUID-AQUI' -> el UUID del usuario de Auth
+-- - 'tu@email.com' -> el email del usuario
+-- - 'Tu Nombre' -> el nombre del admin
+
+INSERT INTO admin_users (id, email, name, role, is_active)
 VALUES (
-  'admin@juninpagos.com',           -- Cambiar email
-  '$2a$10$XXXXXXXXXXXXXXXXXXXXXXXX', -- Cambiar por hash bcrypt del password
-  'Administrador'                    -- Cambiar nombre
+    'UUID-AQUI'::uuid,
+    'tu@email.com',
+    'Tu Nombre',
+    'admin',
+    true
 );
 
+-- Opcional: Actualizar metadata del usuario en auth.users
+-- UPDATE auth.users
+-- SET raw_user_meta_data = jsonb_set(
+--     COALESCE(raw_user_meta_data, '{}'::jsonb),
+--     '{role}',
+--     '"admin"'
+-- )
+-- WHERE id = 'UUID-AQUI';
+
 -- ============================================
--- CONSULTAS UTILES
+-- VERIFICAR
 -- ============================================
-
--- Ver todos los admins:
--- SELECT id, email, nombre, created_at, last_login FROM admins;
-
--- Eliminar admin por email:
--- DELETE FROM admins WHERE email = 'admin@juninpagos.com';
-
--- Actualizar ultimo login (esto lo hace la app automaticamente):
--- UPDATE admins SET last_login = NOW() WHERE email = 'admin@juninpagos.com';
+SELECT id, email, name, role, is_active, created_at
+FROM admin_users;

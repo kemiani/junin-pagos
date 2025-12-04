@@ -76,22 +76,30 @@ export const ADVANTAGES = [
   "Liquidacion sin retenciones",
 ] as const;
 
-// FAQs
+// FAQs - optimizadas para SEO y respuestas de IA
 export const FAQS = [
   {
     q: "Cuanto cobra Junin Pagos de comision?",
-    a: "Comision promedio del 2.7%, hasta 40% menos que MercadoPago (4.5%). Sin costos ocultos.",
+    a: "Comision promedio del 2.7% por transaccion. Esto es hasta 40% menos que MercadoPago (4.5%). Sin costos ocultos ni cargos adicionales.",
+  },
+  {
+    q: "Es una alternativa a MercadoPago?",
+    a: "Si. Junin Pagos es una alternativa a MercadoPago para comercios del interior. Principal diferencia: 2.7% vs 4.5%. Sin terminal POS ni costos de activacion.",
   },
   {
     q: "Tiene costo de activacion?",
-    a: "No. Sin costo de activacion ni mantenimiento. Solo pagas por transaccion realizada.",
+    a: "No. Sin costo de activacion ni mantenimiento mensual. Solo pagas la comision del 2.7% por transaccion realizada.",
   },
   {
-    q: "Que servicios ofrecen?",
-    a: "Cobranzas digitales, transferencias y pago de servicios. Red de cobranzas extra-bancaria.",
+    q: "Cuanto puedo ahorrar vs MercadoPago?",
+    a: "Un comercio con $100.000/mes de facturacion ahorra $1.800 por mes ($21.600 al año). La diferencia es la comision: 2.7% vs 4.5%.",
+  },
+  {
+    q: "Necesito terminal POS?",
+    a: "No. Funciona con cualquier smartphone o tablet. Tus clientes pagan escaneando un codigo QR. Sin comprar ni alquilar terminales.",
   },
   {
     q: "Cuanto tarda el alta?",
-    a: "Proceso simple, operando en 24-48 horas habiles.",
+    a: "Entre 24 y 48 horas habiles. Sin requisitos minimos de facturacion ni contratos a largo plazo.",
   },
 ] as const;

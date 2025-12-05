@@ -91,11 +91,14 @@ export function EmailList({
     <div className="flex flex-col h-full">
       {/* Email List */}
       <div className="flex-1 overflow-y-auto divide-y divide-slate-800">
-        {emails.map((email) => (
+        {emails.map((email) => {
+          const isUnread = !email.is_read && email.direction === 'inbound';
+          return (
           <div
             key={email.id}
             className={`
               flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors
+              ${isUnread ? 'bg-cyan-500/5 border-l-2 border-l-cyan-500' : 'border-l-2 border-l-transparent'}
               ${hoveredId === email.id ? 'bg-slate-800/50' : 'hover:bg-slate-800/30'}
             `}
             onMouseEnter={() => setHoveredId(email.id)}
@@ -119,20 +122,38 @@ export function EmailList({
               <Star className={`w-4 h-4 ${email.is_starred ? 'fill-current' : ''}`} />
             </button>
 
-            {/* Status Icon */}
+            {/* Read Status Icon */}
             <div className="flex-shrink-0">
-              {email.status === 'opened' || email.status === 'clicked' ? (
-                <MailOpen className="w-4 h-4 text-cyan-400" />
+              {email.direction === 'inbound' ? (
+                // Para inbound: mostrar si el admin ya lo leyó
+                email.is_read ? (
+                  <MailOpen className="w-4 h-4 text-slate-500" />
+                ) : (
+                  <Mail className="w-4 h-4 text-cyan-400" />
+                )
               ) : (
-                <Mail className="w-4 h-4 text-slate-500" />
+                // Para outbound: mostrar tracking del destinatario
+                email.status === 'opened' || email.status === 'clicked' ? (
+                  <MailOpen className="w-4 h-4 text-cyan-400" />
+                ) : (
+                  <Mail className="w-4 h-4 text-slate-500" />
+                )
               )}
             </div>
 
-            {/* Recipient & Subject */}
+            {/* Sender/Recipient & Subject */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-sm font-medium text-slate-200 truncate">
-                  {email.to_name || email.to_email}
+                <span className={`text-sm truncate ${
+                  !email.is_read && email.direction === 'inbound'
+                    ? 'font-semibold text-white'
+                    : 'font-medium text-slate-200'
+                }`}>
+                  {/* Para inbound: mostrar remitente (from), para outbound: mostrar destinatario (to) */}
+                  {email.direction === 'inbound'
+                    ? (email.from_name || email.from_email)
+                    : (email.to_name || email.to_email)
+                  }
                 </span>
                 {email.lead && (
                   <span className="text-xs text-slate-500 truncate hidden sm:inline">
@@ -140,7 +161,11 @@ export function EmailList({
                   </span>
                 )}
               </div>
-              <p className="text-sm text-slate-400 truncate">{email.subject}</p>
+              <p className={`text-sm truncate ${
+                !email.is_read && email.direction === 'inbound'
+                  ? 'text-slate-300 font-medium'
+                  : 'text-slate-400'
+              }`}>{email.subject}</p>
             </div>
 
             {/* Status Badge */}
@@ -183,7 +208,8 @@ export function EmailList({
               </span>
             )}
           </div>
-        ))}
+        );
+        })}
       </div>
 
       {/* Pagination */}

@@ -16,6 +16,10 @@ export default function ComposeEmailPage() {
     ? parseInt(searchParams.get('lead_id')!)
     : undefined;
 
+  // Reply-specific params
+  const replyFromEmail = searchParams.get('reply_from') || undefined;
+  const isReply = searchParams.get('is_reply') === 'true';
+
   const handleSend = async (data: EmailData) => {
     setSending(true);
     try {
@@ -85,6 +89,8 @@ export default function ComposeEmailPage() {
         initialTo={initialTo}
         initialLeadId={initialLeadId}
         initialSubject={initialSubject}
+        replyFromEmail={replyFromEmail}
+        isReply={isReply}
         onSend={handleSend}
         onSaveDraft={handleSaveDraft}
         onCancel={handleCancel}

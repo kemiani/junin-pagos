@@ -33,6 +33,8 @@ interface EmailComposerProps {
   initialSubject?: string;
   initialBody?: string;
   initialFromAccountId?: string;
+  replyFromEmail?: string;  // Email de la cuenta desde la que responder
+  isReply?: boolean;        // Indica si es una respuesta (no usar template por defecto)
   onSend: (data: EmailData) => Promise<void>;
   onSaveDraft: (data: EmailData) => Promise<void>;
   onCancel: () => void;
@@ -60,6 +62,8 @@ export function EmailComposer({
   initialSubject = '',
   initialBody = '',
   initialFromAccountId,
+  replyFromEmail,
+  isReply = false,
   onSend,
   onSaveDraft,
   onCancel,
@@ -96,15 +100,30 @@ export function EmailComposer({
           const accounts = data.data.filter((a: EmailAccountWithPermissions) => a.can_send);
           setEmailAccounts(accounts);
 
-          // Seleccionar cuenta inicial
-          if (initialFromAccountId) {
-            const initial = accounts.find((a: EmailAccountWithPermissions) => a.id === initialFromAccountId);
-            if (initial) setSelectedAccount(initial);
-          } else {
-            // Buscar cuenta por defecto o la primera disponible
-            const defaultAccount = accounts.find((a: EmailAccountWithPermissions) => a.is_default) || accounts[0];
-            if (defaultAccount) setSelectedAccount(defaultAccount);
+          // Seleccionar cuenta inicial - prioridad:
+          // 1. replyFromEmail (para responder desde la misma cuenta que recibió)
+          // 2. initialFromAccountId
+          // 3. Cuenta por defecto
+          // 4. Primera cuenta disponible
+          let selectedAcc: EmailAccountWithPermissions | undefined;
+
+          if (replyFromEmail) {
+            // Buscar la cuenta que coincida con el email de respuesta
+            selectedAcc = accounts.find((a: EmailAccountWithPermissions) =>
+              a.email.toLowerCase() === replyFromEmail.toLowerCase()
+            );
           }
+
+          if (!selectedAcc && initialFromAccountId) {
+            selectedAcc = accounts.find((a: EmailAccountWithPermissions) => a.id === initialFromAccountId);
+          }
+
+          if (!selectedAcc) {
+            // Buscar cuenta por defecto o la primera disponible
+            selectedAcc = accounts.find((a: EmailAccountWithPermissions) => a.is_default) || accounts[0];
+          }
+
+          if (selectedAcc) setSelectedAccount(selectedAcc);
         }
       } catch (error) {
         console.error('Error fetching email accounts:', error);
@@ -114,7 +133,7 @@ export function EmailComposer({
     };
 
     fetchAccounts();
-  }, [initialFromAccountId]);
+  }, [initialFromAccountId, replyFromEmail]);
 
   // Fetch leads
   useEffect(() => {
@@ -419,18 +438,36 @@ export function EmailComposer({
             )}
           </div>
 
-          {/* Template Selector */}
+          {/* Template Selector - Menos prominente si es respuesta */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-400">Template:</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-slate-400">
+                Template {isReply && '(opcional)'}:
+              </label>
+              {selectedTemplate && (
+                <button
+                  onClick={() => {
+                    setSelectedTemplate(null);
+                    setSubject(initialSubject);
+                    setBodyHtml('');
+                  }}
+                  className="text-xs text-red-400 hover:text-red-300"
+                >
+                  Quitar template
+                </button>
+              )}
+            </div>
             <div className="relative">
               <button
                 onClick={() => setShowTemplatePicker(!showTemplatePicker)}
-                className="w-full flex items-center justify-between px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-left hover:border-slate-600 transition-colors"
+                className={`w-full flex items-center justify-between px-3 py-2 bg-slate-800 border rounded-lg text-left hover:border-slate-600 transition-colors ${
+                  isReply && !selectedTemplate ? 'border-slate-700/50' : 'border-slate-700'
+                }`}
               >
                 <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-slate-500" />
+                  <FileText className={`w-4 h-4 ${selectedTemplate ? 'text-cyan-500' : 'text-slate-500'}`} />
                   <span className={selectedTemplate ? 'text-white' : 'text-slate-500'}>
-                    {selectedTemplate?.name || 'Seleccionar template (opcional)'}
+                    {selectedTemplate?.name || (isReply ? 'Escribir respuesta libre' : 'Seleccionar template (opcional)')}
                   </span>
                 </div>
                 <ChevronDown className="w-4 h-4 text-slate-500" />
@@ -452,11 +489,13 @@ export function EmailComposer({
                       <button
                         onClick={() => {
                           setSelectedTemplate(null);
+                          setSubject(initialSubject);
+                          setBodyHtml('');
                           setShowTemplatePicker(false);
                         }}
                         className="w-full px-3 py-2 text-sm text-slate-400 hover:bg-slate-700 text-left transition-colors"
                       >
-                        Sin template
+                        {isReply ? 'Escribir respuesta libre' : 'Sin template'}
                       </button>
                       {templates.map((template) => (
                         <button
@@ -473,6 +512,11 @@ export function EmailComposer({
                 </div>
               )}
             </div>
+            {selectedTemplate && (
+              <p className="text-xs text-amber-400">
+                El contenido del template no se puede modificar. Si necesitas cambios, selecciona &quot;Sin template&quot;.
+              </p>
+            )}
           </div>
 
           {/* Subject */}
@@ -481,24 +525,50 @@ export function EmailComposer({
             <input
               type="text"
               value={subject}
-              onChange={(e) => setSubject(e.target.value)}
+              onChange={(e) => !selectedTemplate && setSubject(e.target.value)}
               placeholder="Asunto del email"
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+              readOnly={!!selectedTemplate}
+              className={`w-full px-3 py-2 border rounded-lg text-white placeholder-slate-500 focus:outline-none transition-colors ${
+                selectedTemplate
+                  ? 'bg-slate-800/50 border-slate-700 cursor-not-allowed'
+                  : 'bg-slate-800 border-slate-700 focus:border-cyan-500'
+              }`}
             />
           </div>
 
           {/* Body */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-400">Mensaje:</label>
-            <textarea
-              value={stripHtml(bodyHtml)}
-              onChange={(e) => setBodyHtml(`<p>${e.target.value.replace(/\n/g, '</p><p>')}</p>`)}
-              placeholder="Escribe tu mensaje aquí..."
-              rows={12}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors resize-none"
-            />
+            {selectedTemplate ? (
+              // Si hay template, mostrar preview sin edición
+              <div className="relative">
+                <div
+                  className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white min-h-[200px] overflow-y-auto prose prose-invert prose-sm max-w-none
+                    prose-p:text-slate-300 prose-p:leading-relaxed prose-p:my-1
+                    prose-a:text-cyan-400"
+                  dangerouslySetInnerHTML={{ __html: bodyHtml }}
+                />
+                <div className="absolute top-2 right-2 px-2 py-1 bg-slate-700/80 rounded text-xs text-slate-400">
+                  Template bloqueado
+                </div>
+              </div>
+            ) : (
+              // Sin template, permitir edición libre
+              <textarea
+                value={stripHtml(bodyHtml)}
+                onChange={(e) => setBodyHtml(`<p>${e.target.value.replace(/\n/g, '</p><p>')}</p>`)}
+                placeholder="Escribe tu mensaje aquí..."
+                rows={12}
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors resize-none"
+              />
+            )}
             <p className="text-xs text-slate-500">
-              Tip: Usa templates para mensajes predefinidos con formato HTML
+              {selectedTemplate
+                ? 'El contenido del template se enviará tal cual. Para editar, quita el template.'
+                : isReply
+                  ? 'Escribe tu respuesta. El formato será texto plano.'
+                  : 'Tip: Usa templates para mensajes predefinidos con formato HTML'
+              }
             </p>
           </div>
         </div>

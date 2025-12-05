@@ -22,6 +22,7 @@ interface EmailSidebarProps {
     archived: number;
     trash: number;
     starred: number;
+    unread: number;
   };
 }
 
@@ -66,6 +67,9 @@ export function EmailSidebar({
           const Icon = folder.icon;
           const isActive = currentFolder === folder.id;
           const count = counts[folder.countKey];
+          // Para inbox, mostrar no leídos en lugar del total
+          const isInbox = folder.id === 'inbox';
+          const unreadCount = counts.unread;
 
           return (
             <button
@@ -85,7 +89,14 @@ export function EmailSidebar({
               )}
               <Icon className={`w-4 h-4 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`} />
               <span className="flex-1 text-left">{folder.name}</span>
-              {count > 0 && (
+              {/* Badge de no leídos para inbox */}
+              {isInbox && unreadCount > 0 && (
+                <span className="text-xs px-1.5 py-0.5 rounded-full bg-cyan-500 text-white font-medium">
+                  {unreadCount}
+                </span>
+              )}
+              {/* Badge de conteo para otros folders */}
+              {!isInbox && count > 0 && (
                 <span className={`
                   text-xs px-1.5 py-0.5 rounded
                   ${isActive ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-800 text-slate-500'}

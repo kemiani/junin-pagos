@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { RefreshCw, Search, X } from 'lucide-react';
-import type { Email, EmailFolder } from '@/types/email';
+import { RefreshCw, Search, X, MessageSquare, Mail, LayoutList } from 'lucide-react';
+import type { Email, EmailFolder, EmailThread } from '@/types/email';
 import { EmailSidebar } from '@/components/admin/emails/EmailSidebar';
 import { EmailList } from '@/components/admin/emails/EmailList';
 import { EmailDetail } from '@/components/admin/emails/EmailDetail';
+import { ThreadList } from '@/components/admin/emails/ThreadList';
+import { ThreadDetail } from '@/components/admin/emails/ThreadDetail';
 
 interface EmailsResponse {
   success: boolean;
@@ -19,9 +21,48 @@ interface EmailsResponse {
   };
 }
 
+interface ProcessedThread extends EmailThread {
+  lastEmail: Email;
+  unreadCount: number;
+  hasStarred: boolean;
+  totalEmails: number;
+  hasInbound: boolean;
+  hasOutbound: boolean;
+}
+
+interface ThreadsResponse {
+  success: boolean;
+  data: ProcessedThread[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+interface ThreadDetailResponse {
+  success: boolean;
+  data: EmailThread & { emails: Email[] };
+}
+
+type ViewMode = 'emails' | 'threads';
+
 export default function EmailsPage() {
   const router = useRouter();
+
+  // View mode
+  const [viewMode, setViewMode] = useState<ViewMode>('threads');
+
+  // Email state
   const [emails, setEmails] = useState<Email[]>([]);
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+
+  // Thread state
+  const [threads, setThreads] = useState<ProcessedThread[]>([]);
+  const [selectedThread, setSelectedThread] = useState<(EmailThread & { emails: Email[] }) | null>(null);
+
+  // Common state
   const [loading, setLoading] = useState(true);
   const [currentFolder, setCurrentFolder] = useState<EmailFolder | 'starred'>('inbox');
   const [page, setPage] = useState(1);
@@ -35,10 +76,41 @@ export default function EmailsPage() {
     archived: 0,
     trash: 0,
     starred: 0,
+    unread: 0,
   });
-  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
 
-  // Fetch emails
+  // Fetch threads
+  const fetchThreads = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '25',
+        folder: currentFolder === 'starred' ? 'inbox' : currentFolder,
+      });
+
+      if (search) {
+        params.set('search', search);
+      }
+
+      const response = await fetch(`/api/admin/emails/threads?${params}`, {
+        credentials: 'include',
+      });
+
+      const data: ThreadsResponse = await response.json();
+
+      if (data.success) {
+        setThreads(data.data);
+        setTotalPages(data.meta.totalPages);
+      }
+    } catch (error) {
+      console.error('Error fetching threads:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentFolder, page, search]);
+
+  // Fetch emails (legacy)
   const fetchEmails = useCallback(async () => {
     setLoading(true);
     try {
@@ -74,47 +146,31 @@ export default function EmailsPage() {
     }
   }, [currentFolder, page, search]);
 
-  // Fetch counts for all folders
+  // Fetch counts for all folders (single API call to avoid rate limits)
   const fetchCounts = useCallback(async () => {
     try {
-      const folders: EmailFolder[] = ['inbox', 'sent', 'drafts', 'archived', 'trash'];
-      const countsPromises = folders.map(async (folder) => {
-        const response = await fetch(`/api/admin/emails/list?folder=${folder}&limit=1`, {
-          credentials: 'include',
-        });
-        const data: EmailsResponse = await response.json();
-        return { folder, count: data.meta?.total || 0 };
-      });
-
-      // Starred count
-      const starredResponse = await fetch(`/api/admin/emails/list?is_starred=true&limit=1`, {
+      const response = await fetch('/api/admin/emails/counts', {
         credentials: 'include',
       });
-      const starredData: EmailsResponse = await starredResponse.json();
 
-      const results = await Promise.all(countsPromises);
-      const newCounts = {
-        inbox: 0,
-        sent: 0,
-        drafts: 0,
-        archived: 0,
-        trash: 0,
-        starred: starredData.meta?.total || 0,
-      };
+      const data = await response.json();
 
-      results.forEach(({ folder, count }) => {
-        newCounts[folder as EmailFolder] = count;
-      });
-
-      setCounts(newCounts);
+      if (data.success) {
+        setCounts(data.data);
+      }
     } catch (error) {
       console.error('Error fetching counts:', error);
     }
   }, []);
 
+  // Fetch data based on view mode
   useEffect(() => {
-    fetchEmails();
-  }, [fetchEmails]);
+    if (viewMode === 'threads') {
+      fetchThreads();
+    } else {
+      fetchEmails();
+    }
+  }, [viewMode, fetchThreads, fetchEmails]);
 
   useEffect(() => {
     fetchCounts();
@@ -147,9 +203,72 @@ export default function EmailsPage() {
     router.push('/admin/emails/compose');
   };
 
-  // Handle email click
-  const handleEmailClick = (email: Email) => {
+  // Handle email click - marcar como leído si es inbound y no leído
+  const handleEmailClick = async (email: Email) => {
     setSelectedEmail(email);
+
+    // Si es inbound y no está leído, marcarlo como leído
+    if (email.direction === 'inbound' && !email.is_read) {
+      try {
+        const response = await fetch('/api/admin/emails/list', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            id: email.id,
+            is_read: true,
+          }),
+        });
+
+        if (response.ok) {
+          // Actualizar la lista local
+          setEmails((prev) =>
+            prev.map((e) =>
+              e.id === email.id ? { ...e, is_read: true } : e
+            )
+          );
+          // Actualizar el email seleccionado
+          setSelectedEmail({ ...email, is_read: true });
+          // Actualizar contadores
+          fetchCounts();
+        }
+      } catch (error) {
+        console.error('Error marking email as read:', error);
+      }
+    }
+  };
+
+  // Handle thread click - abrir conversación y marcar como leídos
+  const handleThreadClick = async (thread: ProcessedThread) => {
+    try {
+      const response = await fetch('/api/admin/emails/threads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          thread_id: thread.id,
+          mark_as_read: true,
+        }),
+      });
+
+      const data: ThreadDetailResponse = await response.json();
+
+      if (data.success) {
+        setSelectedThread(data.data);
+
+        // Actualizar el thread en la lista si tenía no leídos
+        if (thread.unreadCount > 0) {
+          setThreads((prev) =>
+            prev.map((t) =>
+              t.id === thread.id ? { ...t, unreadCount: 0 } : t
+            )
+          );
+          fetchCounts();
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching thread:', error);
+    }
   };
 
   // Handle close detail
@@ -157,12 +276,38 @@ export default function EmailsPage() {
     setSelectedEmail(null);
   };
 
-  // Handle reply
-  const handleReply = (email: Email) => {
-    router.push(`/admin/emails/compose?to=${email.from_email}&subject=Re: ${encodeURIComponent(email.subject)}`);
+  // Handle close thread
+  const handleCloseThread = () => {
+    setSelectedThread(null);
   };
 
-  // Handle toggle star
+  // Handle reply
+  const handleReply = (email: Email) => {
+    // Determinar el thread_id si existe
+    const threadId = email.thread_id || selectedThread?.id;
+
+    // Construir parámetros de respuesta
+    const params = new URLSearchParams();
+    params.set('to', email.from_email);
+    params.set('subject', email.subject.startsWith('Re:') ? email.subject : `Re: ${email.subject}`);
+
+    // Si es inbound, usar la cuenta que recibió el email (to_email)
+    // para responder desde la misma cuenta
+    if (email.direction === 'inbound' && email.to_email) {
+      params.set('reply_from', email.to_email);
+    }
+
+    if (threadId) {
+      params.set('thread_id', threadId);
+    }
+
+    // Indicar que es una respuesta (no usar template por defecto)
+    params.set('is_reply', 'true');
+
+    router.push(`/admin/emails/compose?${params.toString()}`);
+  };
+
+  // Handle toggle star (email)
   const handleToggleStar = async (email: Email) => {
     try {
       const response = await fetch('/api/admin/emails/list', {
@@ -181,6 +326,17 @@ export default function EmailsPage() {
             e.id === email.id ? { ...e, is_starred: !e.is_starred } : e
           )
         );
+
+        // También actualizar en el thread seleccionado si existe
+        if (selectedThread) {
+          setSelectedThread({
+            ...selectedThread,
+            emails: selectedThread.emails.map((e) =>
+              e.id === email.id ? { ...e, is_starred: !e.is_starred } : e
+            ),
+          });
+        }
+
         fetchCounts();
       }
     } catch (error) {
@@ -188,7 +344,16 @@ export default function EmailsPage() {
     }
   };
 
-  // Handle archive
+  // Handle toggle star thread (marca el primer email del thread)
+  const handleToggleStarThread = async (thread: ProcessedThread) => {
+    if (!thread.lastEmail) return;
+    await handleToggleStar(thread.lastEmail);
+
+    // Refrescar threads
+    fetchThreads();
+  };
+
+  // Handle archive (email)
   const handleArchive = async (email: Email) => {
     try {
       const response = await fetch('/api/admin/emails/list', {
@@ -210,7 +375,42 @@ export default function EmailsPage() {
     }
   };
 
-  // Handle delete
+  // Handle archive thread
+  const handleArchiveThread = async (thread: ProcessedThread) => {
+    try {
+      const emailsToArchive = thread.emails || [];
+
+      if (emailsToArchive.length === 0) {
+        console.warn('No emails to archive in thread:', thread.id);
+        return;
+      }
+
+      // Archivar todos los emails del thread
+      const archivePromises = emailsToArchive.map((email) =>
+        fetch('/api/admin/emails/list', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            id: email.id,
+            folder: 'archived',
+          }),
+        })
+      );
+
+      await Promise.all(archivePromises);
+
+      // Actualizar ambas vistas
+      setThreads((prev) => prev.filter((t) => t.id !== thread.id));
+      setEmails((prev) => prev.filter((e) => !emailsToArchive.some((te) => te.id === e.id)));
+      setSelectedThread(null);
+      fetchCounts();
+    } catch (error) {
+      console.error('Error archiving thread:', error);
+    }
+  };
+
+  // Handle delete (email)
   const handleDelete = async (email: Email) => {
     const permanent = currentFolder === 'trash';
 
@@ -231,6 +431,41 @@ export default function EmailsPage() {
       }
     } catch (error) {
       console.error('Error deleting email:', error);
+    }
+  };
+
+  // Handle delete thread
+  const handleDeleteThread = async (thread: ProcessedThread) => {
+    try {
+      const emailsToDelete = thread.emails || [];
+
+      if (emailsToDelete.length === 0) {
+        console.warn('No emails to delete in thread:', thread.id);
+        return;
+      }
+
+      // Eliminar todos los emails del thread
+      const deletePromises = emailsToDelete.map((email) =>
+        fetch('/api/admin/emails/list', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            id: email.id,
+            permanent: false,
+          }),
+        })
+      );
+
+      await Promise.all(deletePromises);
+
+      // Actualizar ambas vistas
+      setThreads((prev) => prev.filter((t) => t.id !== thread.id));
+      setEmails((prev) => prev.filter((e) => !emailsToDelete.some((te) => te.id === e.id)));
+      setSelectedThread(null);
+      fetchCounts();
+    } catch (error) {
+      console.error('Error deleting thread:', error);
     }
   };
 
@@ -276,6 +511,15 @@ export default function EmailsPage() {
     }
   };
 
+  // Refresh current view
+  const handleRefresh = () => {
+    if (viewMode === 'threads') {
+      fetchThreads();
+    } else {
+      fetchEmails();
+    }
+  };
+
   return (
     <div className="h-[calc(100vh-180px)] flex bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
       {/* Sidebar */}
@@ -295,12 +539,44 @@ export default function EmailsPage() {
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-white">{getFolderTitle()}</h2>
             <button
-              onClick={() => fetchEmails()}
+              onClick={handleRefresh}
               disabled={loading}
               className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors disabled:opacity-50"
               title="Actualizar"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center bg-slate-800 rounded-lg p-0.5">
+            <button
+              onClick={() => setViewMode('threads')}
+              className={`
+                flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors
+                ${viewMode === 'threads'
+                  ? 'bg-cyan-500 text-white'
+                  : 'text-slate-400 hover:text-white'
+                }
+              `}
+              title="Vista de conversaciones"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Conversaciones</span>
+            </button>
+            <button
+              onClick={() => setViewMode('emails')}
+              className={`
+                flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors
+                ${viewMode === 'emails'
+                  ? 'bg-cyan-500 text-white'
+                  : 'text-slate-400 hover:text-white'
+                }
+              `}
+              title="Vista individual"
+            >
+              <LayoutList className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Individual</span>
             </button>
           </div>
 
@@ -312,7 +588,7 @@ export default function EmailsPage() {
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Buscar emails..."
+                placeholder={viewMode === 'threads' ? 'Buscar conversaciones...' : 'Buscar emails...'}
                 className="w-full pl-9 pr-8 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
               />
               {(search || searchInput) && (
@@ -360,23 +636,37 @@ export default function EmailsPage() {
           ))}
         </div>
 
-        {/* Email List */}
-        <EmailList
-          emails={emails}
-          loading={loading}
-          folder={currentFolder === 'starred' ? 'sent' : currentFolder}
-          page={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          onEmailClick={handleEmailClick}
-          onToggleStar={handleToggleStar}
-          onArchive={handleArchive}
-          onDelete={handleDelete}
-          onRestore={currentFolder === 'trash' ? handleRestore : undefined}
-        />
+        {/* Content - Thread or Email List */}
+        {viewMode === 'threads' ? (
+          <ThreadList
+            threads={threads}
+            loading={loading}
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            onThreadClick={handleThreadClick}
+            onToggleStar={handleToggleStarThread}
+            onArchive={handleArchiveThread}
+            onDelete={handleDeleteThread}
+          />
+        ) : (
+          <EmailList
+            emails={emails}
+            loading={loading}
+            folder={currentFolder === 'starred' ? 'sent' : currentFolder}
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            onEmailClick={handleEmailClick}
+            onToggleStar={handleToggleStar}
+            onArchive={handleArchive}
+            onDelete={handleDelete}
+            onRestore={currentFolder === 'trash' ? handleRestore : undefined}
+          />
+        )}
       </div>
 
-      {/* Email Detail Modal */}
+      {/* Email Detail Modal (individual view) */}
       {selectedEmail && (
         <EmailDetail
           email={selectedEmail}
@@ -393,6 +683,58 @@ export default function EmailsPage() {
           onDelete={(email) => {
             handleDelete(email);
             setSelectedEmail(null);
+          }}
+        />
+      )}
+
+      {/* Thread Detail Modal (conversation view) */}
+      {selectedThread && (
+        <ThreadDetail
+          thread={selectedThread}
+          onClose={handleCloseThread}
+          onReply={handleReply}
+          onToggleStar={handleToggleStar}
+          onArchive={() => {
+            // Archive all emails in thread
+            if (selectedThread.emails && selectedThread.emails.length > 0) {
+              const emailIds = selectedThread.emails.map((e) => e.id);
+              Promise.all(
+                selectedThread.emails.map((email) =>
+                  fetch('/api/admin/emails/list', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ id: email.id, folder: 'archived' }),
+                  })
+                )
+              ).then(() => {
+                setSelectedThread(null);
+                setThreads((prev) => prev.filter((t) => t.id !== selectedThread.id));
+                setEmails((prev) => prev.filter((e) => !emailIds.includes(e.id)));
+                fetchCounts();
+              });
+            }
+          }}
+          onDelete={() => {
+            // Delete all emails in thread
+            if (selectedThread.emails && selectedThread.emails.length > 0) {
+              const emailIds = selectedThread.emails.map((e) => e.id);
+              Promise.all(
+                selectedThread.emails.map((email) =>
+                  fetch('/api/admin/emails/list', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ id: email.id, permanent: false }),
+                  })
+                )
+              ).then(() => {
+                setSelectedThread(null);
+                setThreads((prev) => prev.filter((t) => t.id !== selectedThread.id));
+                setEmails((prev) => prev.filter((e) => !emailIds.includes(e.id)));
+                fetchCounts();
+              });
+            }
           }}
         />
       )}

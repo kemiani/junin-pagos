@@ -77,11 +77,13 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams;
+    const isReadParam = searchParams.get('is_read');
     const filters: EmailFilters = {
       folder: searchParams.get('folder') as EmailFolder | undefined,
       status: searchParams.get('status') as EmailStatus | undefined,
       lead_id: searchParams.get('lead_id') ? parseInt(searchParams.get('lead_id')!) : undefined,
       is_starred: searchParams.get('is_starred') === 'true' ? true : undefined,
+      is_read: isReadParam !== null ? isReadParam === 'true' : undefined,
       search: searchParams.get('search') || undefined,
       page: Math.max(parseInt(searchParams.get('page') || '1'), 1),
       limit: Math.min(parseInt(searchParams.get('limit') || '50'), 100),
@@ -121,6 +123,10 @@ export async function GET(request: NextRequest) {
 
     if (filters.is_starred !== undefined) {
       query = query.eq('is_starred', filters.is_starred);
+    }
+
+    if (filters.is_read !== undefined) {
+      query = query.eq('is_read', filters.is_read);
     }
 
     if (filters.search) {
@@ -204,7 +210,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Filtrar solo campos permitidos
-    const allowedFields: (keyof UpdateEmailDTO)[] = ['subject', 'body_html', 'body_text', 'is_archived', 'is_starred', 'folder'];
+    const allowedFields: (keyof UpdateEmailDTO)[] = ['subject', 'body_html', 'body_text', 'is_archived', 'is_starred', 'is_read', 'folder'];
     const filteredData: Record<string, unknown> = {};
     for (const key of allowedFields) {
       if (updateData[key] !== undefined) {

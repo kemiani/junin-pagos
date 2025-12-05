@@ -93,6 +93,7 @@ export interface EmailThread {
     id: number;
     nombre: string;
     telefono: string;
+    localidad?: string;
   };
   emails?: Email[];
 }
@@ -156,6 +157,7 @@ export interface UpdateEmailDTO {
   body_text?: string;
   is_archived?: boolean;
   is_starred?: boolean;
+  is_read?: boolean;
   folder?: EmailFolder;
 }
 
@@ -173,6 +175,7 @@ export interface EmailFilters {
   status?: EmailStatus;
   lead_id?: number;
   is_starred?: boolean;
+  is_read?: boolean;
   search?: string;
   page?: number;
   limit?: number;

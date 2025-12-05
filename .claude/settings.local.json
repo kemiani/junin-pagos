@@ -23,7 +23,8 @@
       "Bash(git commit:*)",
       "Bash(npm ls:*)",
       "WebFetch(domain:www.timmedicina.com)",
-      "Bash(printf:*)"
+      "Bash(printf:*)",
+      "WebFetch(domain:resend.com)"
     ],
     "deny": [],
     "ask": []

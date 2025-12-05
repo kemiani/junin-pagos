@@ -140,20 +140,48 @@ async function handleInboundEmail(
     const { data } = payload;
     const resendEmailId = data.email_id;
 
-    // Obtener contenido completo del email usando la API de Resend
+    // Obtener contenido completo del email usando la API de Resend (endpoint de receiving)
     let bodyHtml = '';
     let bodyText = '';
 
     try {
-      const resend = getResendClient();
-      const emailContent = await resend.emails.get(resendEmailId);
-      if (emailContent.data) {
-        bodyHtml = emailContent.data.html || '';
-        bodyText = emailContent.data.text || '';
+      // Usar fetch directo porque el SDK puede no tener el método de receiving
+      const response = await fetch(`https://api.resend.com/emails/${resendEmailId}`, {
+        headers: {
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        },
+      });
+
+      if (response.ok) {
+        const emailData = await response.json();
+        bodyHtml = emailData.html || emailData.body || '';
+        bodyText = emailData.text || '';
+        console.log('[Webhook] Email content fetched successfully');
+      } else {
+        console.error('[Webhook] Error fetching email:', response.status, await response.text());
       }
     } catch (fetchError) {
       console.error('[Webhook] Error fetching email content:', fetchError);
-      // Continuar sin contenido - se puede agregar después
+    }
+
+    // Si no pudimos obtener el contenido, intentar con el endpoint de receiving
+    if (!bodyHtml && !bodyText) {
+      try {
+        const response = await fetch(`https://api.resend.com/emails/receiving/${resendEmailId}`, {
+          headers: {
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          },
+        });
+
+        if (response.ok) {
+          const emailData = await response.json();
+          bodyHtml = emailData.html || emailData.body || '';
+          bodyText = emailData.text || '';
+          console.log('[Webhook] Email content fetched from receiving endpoint');
+        }
+      } catch (fetchError) {
+        console.error('[Webhook] Error fetching from receiving endpoint:', fetchError);
+      }
     }
 
     // Extraer nombre y email del remitente

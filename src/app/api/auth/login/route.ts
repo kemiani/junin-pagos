@@ -7,6 +7,10 @@ const SECURITY_HEADERS = {
   'Pragma': 'no-cache',
 };
 
+// Duración de sesión en segundos (3 horas)
+const SESSION_DURATION_SECONDS = 3 * 60 * 60;
+const SESSION_COOKIE_NAME = 'admin_session_timestamp';
+
 function createApiSupabaseClient(request: NextRequest, response: NextResponse) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -107,8 +111,20 @@ export async function POST(request: NextRequest) {
       { status: 200, headers: SECURITY_HEADERS }
     );
 
+    // Copiar cookies de Supabase
     response.cookies.getAll().forEach(cookie => {
       finalResponse.cookies.set(cookie);
+    });
+
+    // Crear cookie de sesión con timestamp actual
+    finalResponse.cookies.set({
+      name: SESSION_COOKIE_NAME,
+      value: Date.now().toString(),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: SESSION_DURATION_SECONDS,
     });
 
     return finalResponse;

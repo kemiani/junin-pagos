@@ -7,6 +7,8 @@ const SECURITY_HEADERS = {
   'Pragma': 'no-cache',
 };
 
+const SESSION_COOKIE_NAME = 'admin_session_timestamp';
+
 function createApiSupabaseClient(request: NextRequest, response: NextResponse) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -59,7 +61,7 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
-    const cookiesToClear = ['sb-access-token', 'sb-refresh-token'];
+    const cookiesToClear = ['sb-access-token', 'sb-refresh-token', SESSION_COOKIE_NAME];
     cookiesToClear.forEach(cookieName => {
       response.cookies.set({
         name: cookieName,
@@ -79,11 +81,14 @@ export async function POST(request: NextRequest) {
       { status: 200, headers: SECURITY_HEADERS }
     );
 
-    response.cookies.set({
-      name: 'junin-auth-token',
-      value: '',
-      maxAge: 0,
-      path: '/',
+    // Limpiar todas las cookies relevantes
+    ['junin-auth-token', SESSION_COOKIE_NAME].forEach(cookieName => {
+      response.cookies.set({
+        name: cookieName,
+        value: '',
+        maxAge: 0,
+        path: '/',
+      });
     });
 
     return response;
@@ -97,22 +102,29 @@ export async function GET(request: NextRequest) {
     const supabase = createApiSupabaseClient(request, response);
     await supabase.auth.signOut();
 
-    response.cookies.set({
-      name: 'junin-auth-token',
-      value: '',
-      maxAge: 0,
-      path: '/',
+    // Limpiar todas las cookies relevantes
+    ['junin-auth-token', SESSION_COOKIE_NAME].forEach(cookieName => {
+      response.cookies.set({
+        name: cookieName,
+        value: '',
+        maxAge: 0,
+        path: '/',
+      });
     });
 
     return response;
 
   } catch {
     const response = NextResponse.redirect(new URL('/admin/login', request.url));
-    response.cookies.set({
-      name: 'junin-auth-token',
-      value: '',
-      maxAge: 0,
-      path: '/',
+
+    // Limpiar todas las cookies relevantes
+    ['junin-auth-token', SESSION_COOKIE_NAME].forEach(cookieName => {
+      response.cookies.set({
+        name: cookieName,
+        value: '',
+        maxAge: 0,
+        path: '/',
+      });
     });
 
     return response;

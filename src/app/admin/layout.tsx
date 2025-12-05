@@ -10,7 +10,8 @@ import {
   Menu,
   X,
   ChevronLeft,
-  ChevronDown
+  ChevronDown,
+  Mail
 } from 'lucide-react';
 
 interface User {
@@ -28,6 +29,7 @@ interface NavItem {
 const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Leads', href: '/admin/leads', icon: Users },
+  { name: 'Emails', href: '/admin/emails', icon: Mail },
 ];
 
 const SIDEBAR_WIDTH = 256;

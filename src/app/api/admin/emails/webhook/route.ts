@@ -185,9 +185,24 @@ async function handleInboundEmail(
     }
 
     // Extraer nombre y email del remitente
-    const fromMatch = data.from.match(/^(?:(.+?)\s*)?<?([^<>]+@[^<>]+)>?$/);
-    const fromName = fromMatch?.[1]?.trim() || null;
-    const fromEmail = fromMatch?.[2]?.trim() || data.from;
+    // Soporta formatos: "Nombre <email@domain.com>" o "email@domain.com"
+    let fromName: string | null = null;
+    let fromEmail: string = data.from;
+
+    console.log('[Webhook] Parsing from field:', data.from);
+
+    const angleMatch = data.from.match(/^(.+?)\s*<([^<>]+)>$/);
+    if (angleMatch) {
+      // Formato: "Nombre <email@domain.com>"
+      fromName = angleMatch[1].trim();
+      fromEmail = angleMatch[2].trim();
+      console.log('[Webhook] Parsed with angle brackets - Name:', fromName, 'Email:', fromEmail);
+    } else {
+      // Formato simple: "email@domain.com"
+      fromEmail = data.from.trim();
+      fromName = null;
+      console.log('[Webhook] Parsed without angle brackets - Email:', fromEmail);
+    }
 
     // Buscar a qué cuenta de email llegó
     const toEmail = data.to[0]; // Primer destinatario

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { formatDistanceToNow } from 'date-fns';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
   Star,
@@ -9,8 +9,8 @@ import {
   Trash2,
   Mail,
   MailOpen,
-  ChevronLeft,
-  ChevronRight,
+  ChevronUp,
+  Loader2,
   MessageSquare,
   Users,
 } from 'lucide-react';
@@ -30,7 +30,9 @@ interface ThreadListProps {
   loading: boolean;
   page: number;
   totalPages: number;
-  onPageChange: (page: number) => void;
+  total: number;
+  loadingMore: boolean;
+  onLoadMore: () => void;
   onThreadClick: (thread: ProcessedThread) => void;
   onToggleStar: (thread: ProcessedThread) => void;
   onArchive: (thread: ProcessedThread) => void;
@@ -42,13 +44,55 @@ export function ThreadList({
   loading,
   page,
   totalPages,
-  onPageChange,
+  total,
+  loadingMore,
+  onLoadMore,
   onThreadClick,
   onToggleStar,
   onArchive,
   onDelete,
 }: ThreadListProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top
+  const scrollToTop = () => {
+    listRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handle scroll to show/hide "go to top" button
+  const handleScroll = useCallback(() => {
+    if (listRef.current) {
+      setShowScrollTop(listRef.current.scrollTop > 300);
+    }
+  }, []);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loadingMore && page < totalPages) {
+          onLoadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, [loadingMore, page, totalPages, onLoadMore]);
 
   if (loading) {
     return (
@@ -82,11 +126,17 @@ export function ThreadList({
     const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
-      return formatDistanceToNow(date, { addSuffix: true, locale: es });
+      // Hoy: mostrar hora
+      return format(date, 'HH:mm', { locale: es });
+    } else if (diffDays === 1) {
+      // Ayer
+      return 'Ayer ' + format(date, 'HH:mm', { locale: es });
     } else if (diffDays < 7) {
-      return formatDistanceToNow(date, { addSuffix: true, locale: es });
+      // Esta semana: día + hora
+      return format(date, "EEE d 'a las' HH:mm", { locale: es });
     } else {
-      return date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+      // Más antiguo: fecha completa
+      return format(date, 'd MMM yyyy', { locale: es });
     }
   };
 
@@ -111,9 +161,25 @@ export function ThreadList({
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Thread List */}
-      <div className="flex-1 overflow-y-auto divide-y divide-slate-800">
+    <div className="flex flex-col h-full relative">
+      {/* Progress indicator */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/50">
+        <span className="text-xs text-slate-500">
+          Mostrando {threads.length} de {total} conversaciones
+        </span>
+        {page < totalPages && (
+          <span className="text-xs text-slate-400">
+            Scroll para cargar más
+          </span>
+        )}
+      </div>
+
+      {/* Thread List with scroll */}
+      <div
+        ref={listRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto divide-y divide-slate-800"
+      >
         {threads.map((thread) => {
           const isUnread = thread.unreadCount > 0;
           return (
@@ -231,31 +297,31 @@ export function ThreadList({
             </div>
           );
         })}
+        {/* Infinite scroll trigger */}
+        <div ref={loadMoreRef} className="py-4">
+          {loadingMore && (
+            <div className="flex items-center justify-center gap-2 text-slate-400">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm">Cargando más...</span>
+            </div>
+          )}
+          {page >= totalPages && threads.length > 0 && (
+            <p className="text-center text-xs text-slate-500 py-2">
+              Has llegado al final
+            </p>
+          )}
+        </div>
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-800">
-          <span className="text-xs text-slate-500">
-            Página {page} de {totalPages}
-          </span>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => onPageChange(page - 1)}
-              disabled={page <= 1}
-              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onPageChange(page + 1)}
-              disabled={page >= totalPages}
-              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+      {/* Scroll to top button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="absolute bottom-4 right-4 p-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-full shadow-lg transition-all"
+          title="Ir al inicio"
+        >
+          <ChevronUp className="w-5 h-5" />
+        </button>
       )}
     </div>
   );

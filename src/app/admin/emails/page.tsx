@@ -64,9 +64,11 @@ export default function EmailsPage() {
 
   // Common state
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [currentFolder, setCurrentFolder] = useState<EmailFolder | 'starred'>('inbox');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [counts, setCounts] = useState({
@@ -79,12 +81,16 @@ export default function EmailsPage() {
     unread: 0,
   });
 
-  // Fetch threads
-  const fetchThreads = useCallback(async () => {
-    setLoading(true);
+  // Fetch threads (initial load or filter change)
+  const fetchThreads = useCallback(async (resetPage = true) => {
+    if (resetPage) {
+      setLoading(true);
+      setPage(1);
+    }
+
     try {
       const params = new URLSearchParams({
-        page: page.toString(),
+        page: resetPage ? '1' : page.toString(),
         limit: '25',
         folder: currentFolder === 'starred' ? 'inbox' : currentFolder,
       });
@@ -100,8 +106,14 @@ export default function EmailsPage() {
       const data: ThreadsResponse = await response.json();
 
       if (data.success) {
-        setThreads(data.data);
+        if (resetPage) {
+          setThreads(data.data);
+        } else {
+          // Append for infinite scroll
+          setThreads(prev => [...prev, ...data.data]);
+        }
         setTotalPages(data.meta.totalPages);
+        setTotal(data.meta.total);
       }
     } catch (error) {
       console.error('Error fetching threads:', error);
@@ -110,12 +122,53 @@ export default function EmailsPage() {
     }
   }, [currentFolder, page, search]);
 
-  // Fetch emails (legacy)
-  const fetchEmails = useCallback(async () => {
-    setLoading(true);
+  // Load more threads for infinite scroll
+  const loadMoreThreads = useCallback(async () => {
+    if (loadingMore || page >= totalPages) return;
+
+    setLoadingMore(true);
+    const nextPage = page + 1;
+
     try {
       const params = new URLSearchParams({
-        page: page.toString(),
+        page: nextPage.toString(),
+        limit: '25',
+        folder: currentFolder === 'starred' ? 'inbox' : currentFolder,
+      });
+
+      if (search) {
+        params.set('search', search);
+      }
+
+      const response = await fetch(`/api/admin/emails/threads?${params}`, {
+        credentials: 'include',
+      });
+
+      const data: ThreadsResponse = await response.json();
+
+      if (data.success) {
+        setThreads(prev => [...prev, ...data.data]);
+        setPage(nextPage);
+        setTotalPages(data.meta.totalPages);
+        setTotal(data.meta.total);
+      }
+    } catch (error) {
+      console.error('Error loading more threads:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [currentFolder, page, totalPages, search, loadingMore]);
+
+  // Fetch emails (initial load or filter change)
+  const fetchEmails = useCallback(async (resetPage = true) => {
+    if (resetPage) {
+      setLoading(true);
+      setPage(1);
+    }
+
+    try {
+      const params = new URLSearchParams({
+        page: resetPage ? '1' : page.toString(),
         limit: '25',
       });
 
@@ -136,8 +189,13 @@ export default function EmailsPage() {
       const data: EmailsResponse = await response.json();
 
       if (data.success) {
-        setEmails(data.data);
+        if (resetPage) {
+          setEmails(data.data);
+        } else {
+          setEmails(prev => [...prev, ...data.data]);
+        }
         setTotalPages(data.meta.totalPages);
+        setTotal(data.meta.total);
       }
     } catch (error) {
       console.error('Error fetching emails:', error);
@@ -145,6 +203,48 @@ export default function EmailsPage() {
       setLoading(false);
     }
   }, [currentFolder, page, search]);
+
+  // Load more emails for infinite scroll
+  const loadMoreEmails = useCallback(async () => {
+    if (loadingMore || page >= totalPages) return;
+
+    setLoadingMore(true);
+    const nextPage = page + 1;
+
+    try {
+      const params = new URLSearchParams({
+        page: nextPage.toString(),
+        limit: '25',
+      });
+
+      if (currentFolder === 'starred') {
+        params.set('is_starred', 'true');
+      } else {
+        params.set('folder', currentFolder);
+      }
+
+      if (search) {
+        params.set('search', search);
+      }
+
+      const response = await fetch(`/api/admin/emails/list?${params}`, {
+        credentials: 'include',
+      });
+
+      const data: EmailsResponse = await response.json();
+
+      if (data.success) {
+        setEmails(prev => [...prev, ...data.data]);
+        setPage(nextPage);
+        setTotalPages(data.meta.totalPages);
+        setTotal(data.meta.total);
+      }
+    } catch (error) {
+      console.error('Error loading more emails:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [currentFolder, page, totalPages, search, loadingMore]);
 
   // Fetch counts for all folders (single API call to avoid rate limits)
   const fetchCounts = useCallback(async () => {
@@ -166,11 +266,12 @@ export default function EmailsPage() {
   // Fetch data based on view mode
   useEffect(() => {
     if (viewMode === 'threads') {
-      fetchThreads();
+      fetchThreads(true);
     } else {
-      fetchEmails();
+      fetchEmails(true);
     }
-  }, [viewMode, fetchThreads, fetchEmails]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, currentFolder, search]);
 
   useEffect(() => {
     fetchCounts();
@@ -180,6 +281,8 @@ export default function EmailsPage() {
   const handleFolderChange = (folder: EmailFolder | 'starred') => {
     setCurrentFolder(folder);
     setPage(1);
+    setThreads([]); // Reset threads for new folder
+    setEmails([]); // Reset emails for new folder
     setSearch('');
     setSearchInput('');
   };
@@ -637,33 +740,39 @@ export default function EmailsPage() {
         </div>
 
         {/* Content - Thread or Email List */}
-        {viewMode === 'threads' ? (
-          <ThreadList
-            threads={threads}
-            loading={loading}
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            onThreadClick={handleThreadClick}
-            onToggleStar={handleToggleStarThread}
-            onArchive={handleArchiveThread}
-            onDelete={handleDeleteThread}
-          />
-        ) : (
-          <EmailList
-            emails={emails}
-            loading={loading}
-            folder={currentFolder === 'starred' ? 'sent' : currentFolder}
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            onEmailClick={handleEmailClick}
-            onToggleStar={handleToggleStar}
-            onArchive={handleArchive}
-            onDelete={handleDelete}
-            onRestore={currentFolder === 'trash' ? handleRestore : undefined}
-          />
-        )}
+        <div className="flex-1 min-h-0">
+          {viewMode === 'threads' ? (
+            <ThreadList
+              threads={threads}
+              loading={loading}
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              loadingMore={loadingMore}
+              onLoadMore={loadMoreThreads}
+              onThreadClick={handleThreadClick}
+              onToggleStar={handleToggleStarThread}
+              onArchive={handleArchiveThread}
+              onDelete={handleDeleteThread}
+            />
+          ) : (
+            <EmailList
+              emails={emails}
+              loading={loading}
+              folder={currentFolder === 'starred' ? 'sent' : currentFolder}
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              loadingMore={loadingMore}
+              onLoadMore={loadMoreEmails}
+              onEmailClick={handleEmailClick}
+              onToggleStar={handleToggleStar}
+              onArchive={handleArchive}
+              onDelete={handleDelete}
+              onRestore={currentFolder === 'trash' ? handleRestore : undefined}
+            />
+          )}
+        </div>
       </div>
 
       {/* Email Detail Modal (individual view) */}

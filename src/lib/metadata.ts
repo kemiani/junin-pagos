@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { BUSINESS } from "./constants";
 
-const siteUrl = "https://juninpagos.com.ar";
+const siteUrl = "https://juninpagos.net";
 
 export const viewport: Viewport = {
   themeColor: "#020617",
@@ -227,7 +227,7 @@ export function generateJsonLd() {
             name: "¿Cuánto tarda el alta en Junin Pagos?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "El proceso de alta es simple y tarda entre 24 y 48 horas hábiles. No hay requisitos mínimos de facturación ni contratos a largo plazo.",
+              text: "El proceso de alta es simple y tarda entre 24 y 48 horas hábiles. No hay requisitos mínimos de facturación.",
             },
           },
           {

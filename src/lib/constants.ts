@@ -52,7 +52,7 @@ export const SERVICES = [
   {
     icon: "payments",
     title: "Cobranzas",
-    desc: "Recibi pagos de forma simple. Sin terminales costosas ni contratos complicados.",
+    desc: "Recibi pagos de forma simple. Sin terminales costosas.",
   },
   {
     icon: "transfer",
@@ -100,6 +100,6 @@ export const FAQS = [
   },
   {
     q: "Cuanto tarda el alta?",
-    a: "Entre 24 y 48 horas habiles. Sin requisitos minimos de facturacion ni contratos a largo plazo.",
+    a: "Entre 24 y 48 horas habiles. Sin requisitos minimos de facturacion.",
   },
 ] as const;
